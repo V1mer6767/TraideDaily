@@ -385,7 +385,6 @@
       </select>
       <button class="btn" id="refreshBtn" title="Підтягнути свіжу версію сторінки">⟳ Оновити</button>
       <button class="btn" id="mtOpenBtn">⚡ MetaTrader</button>
-      <button class="btn btn-primary" id="addBtn">+ Нова угода</button>
     </div>
   </header>
 
@@ -749,8 +748,7 @@ function renderTable(){
     wrap.innerHTML = `
       <div class="empty-state">
         <h3>Журнал порожній</h3>
-        <p>Додай першу угоду вручну або напиши деталі в чаті — Claude внесе їх сюди.</p>
-        <button class="btn btn-primary" onclick="document.getElementById('addBtn').click()">+ Нова угода</button>
+        <p>Скинь скрін з історії MetaTrader у чат Claude — угоди зʼявляться тут.</p>
       </div>`;
     return;
   }
@@ -944,7 +942,6 @@ function closeModal(){
   editingId = null;
 }
 
-document.getElementById('addBtn').addEventListener('click', openAdd);
 document.getElementById('cancelBtn').addEventListener('click', closeModal);
 backdrop.addEventListener('click', (e)=>{ if(e.target === backdrop) closeModal(); });
 
