@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeDaily — торговий журнал</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#050706;
+    --panel:#0B0F0C;
+    --panel-2:#0F1512;
+    --border:#1B2620;
+    --text:#DFF7E6;
+    --muted:#5A7565;
+    --muted-2:#84A38C;
+    --long:#2FA660;
+    --long-dim:#0F2A1B;
+    --short:#C4453D;
+    --short-dim:#301716;
+    --amber:#2FA660;
+    --amber-dim:#0C2417;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .app{max-width:1180px;margin:0 auto;padding:0 20px 64px;}
+
+  /* ===== Ticker ===== */
+  .ticker-wrap{
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+    overflow:hidden;
+    position:relative;
+    height:40px;
+    display:flex;
+    align-items:center;
+  }
+  .ticker-wrap::before, .ticker-wrap::after{
+    content:'';
+    position:absolute; top:0; bottom:0; width:40px; z-index:2;
+  }
+  .ticker-wrap::before{left:0; background:linear-gradient(90deg, var(--panel), transparent);}
+  .ticker-wrap::after{right:0; background:linear-gradient(270deg, var(--panel), transparent);}
+  .ticker-track{
+    display:flex;
+    gap:28px;
+    white-space:nowrap;
+    animation: scroll-ticker 30s linear infinite;
+    padding-left:100%;
+  }
+  .ticker-wrap:hover .ticker-track{animation-play-state:paused;}
+  @keyframes scroll-ticker{
+    from{transform:translateX(0);}
+    to{transform:translateX(-100%);}
+  }
+  .ticker-item{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    letter-spacing:.02em;
+    color:var(--muted-2);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .ticker-item b{color:var(--text); font-weight:600;}
+  .ticker-item.up{color:var(--long);}
+  .ticker-item.down{color:var(--short);}
+  .ticker-empty{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    color:var(--muted);
+    padding-left:20px;
+  }
+
+  /* ===== Header ===== */
+  header{padding:36px 0 24px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px;}
+  .brand-eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:32px;
+    margin:0;
+    letter-spacing:-.01em;
+  }
+  .header-actions{display:flex; gap:10px; align-items:center;}
+  select, .btn{
+    font-family:'Inter',sans-serif;
+    font-size:13.5px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--text);
+    padding:9px 14px;
+    cursor:pointer;
+  }
+  select:focus, .btn:focus, input:focus, textarea:focus{
+    outline:2px solid var(--amber);
+    outline-offset:1px;
+  }
+  .btn-primary{
+    background:var(--amber);
+    color:#F0FFF4;
+    border-color:var(--amber);
+    font-weight:600;
+  }
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn:hover{border-color:#3a4048;}
+
+  /* ===== Stats ===== */
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    margin-bottom:28px;
+  }
+  .stat{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px 20px;
+  }
+  .stat-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 8px;
+  }
+  .stat-value{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:26px;
+    font-weight:600;
+    margin:0;
+  }
+  .stat-value.pos{color:var(--long);}
+  .stat-value.neg{color:var(--short);}
+  .stat-sub{font-size:11.5px; color:var(--muted); margin-top:4px;}
+
+  /* ===== Filter bar ===== */
+  .filter-bar{
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+  .filter-bar input[type=text]{
+    font-family:'Inter',sans-serif;
+    font-size:13.5px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:9px 12px;
+    min-width:160px;
+  }
+  .filter-spacer{flex:1;}
+
+  /* ===== Table ===== */
+  .table-wrap{
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow:hidden;
+    background:var(--panel);
+  }
+  table{width:100%; border-collapse:collapse;}
+  thead th{
+    text-align:left;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:500;
+    padding:12px 14px;
+    border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  tbody tr{border-bottom:1px solid var(--border); transition:background .12s;}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--panel-2);}
+  tbody td{padding:12px 14px; font-size:13.5px; vertical-align:middle;}
+  td.num{font-family:'IBM Plex Mono',monospace; font-size:13px; white-space:nowrap;}
+  .pair-cell{font-weight:600; font-family:'IBM Plex Mono',monospace;}
+  .dir-pill{
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px; font-weight:600;
+    padding:3px 8px; border-radius:20px;
+  }
+  .dir-pill.long{background:var(--long-dim); color:var(--long);}
+  .dir-pill.short{background:var(--short-dim); color:var(--short);}
+  .status-pill{
+    display:inline-flex; align-items:center;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px; font-weight:600;
+    padding:3px 8px; border-radius:20px;
+  }
+  .status-pill.win{background:var(--long-dim); color:var(--long);}
+  .status-pill.loss{background:var(--short-dim); color:var(--short);}
+  .status-pill.be{background:#232830; color:var(--muted-2);}
+  .status-pill.open{background:var(--amber-dim); color:var(--amber);}
+  .result-val.pos{color:var(--long);}
+  .result-val.neg{color:var(--short);}
+  .row-actions{display:flex; gap:6px; justify-content:flex-end;}
+  .icon-btn{
+    background:transparent; border:none; color:var(--muted);
+    cursor:pointer; padding:4px 6px; border-radius:6px; font-size:14px;
+    line-height:1;
+  }
+  .icon-btn:hover{color:var(--text); background:var(--border);}
+  .notes-preview{color:var(--muted-2); font-size:12.5px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+  .empty-state{
+    padding:64px 20px; text-align:center;
+  }
+  .empty-state h3{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:18px; margin:0 0 8px;
+  }
+  .empty-state p{color:var(--muted); font-size:13.5px; margin:0 0 20px;}
+
+  /* ===== Modal ===== */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,.6);
+    display:none; align-items:center; justify-content:center;
+    z-index:50; padding:20px;
+  }
+  .modal-backdrop.open{display:flex;}
+  .modal{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    width:100%; max-width:560px;
+    max-height:90vh; overflow-y:auto;
+    padding:26px;
+  }
+  .modal h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:19px; margin:0 0 18px;
+  }
+  .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .form-grid .full{grid-column:1/-1;}
+  label{
+    display:block; font-size:11.5px; color:var(--muted-2);
+    margin-bottom:5px; font-family:'IBM Plex Mono',monospace; letter-spacing:.03em;
+  }
+  input, textarea, .form-grid select{
+    width:100%;
+    font-family:'Inter',sans-serif;
+    font-size:13.5px;
+    background:var(--bg);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:9px 11px;
+  }
+  textarea{resize:vertical; min-height:60px; font-family:'Inter',sans-serif;}
+  .modal-actions{display:flex; justify-content:space-between; align-items:center; margin-top:22px;}
+  .modal-actions-right{display:flex; gap:10px;}
+  .btn-ghost{background:transparent; border:1px solid var(--border); color:var(--muted-2);}
+  .btn-danger{background:transparent; border:1px solid var(--short); color:var(--short);}
+  .btn-danger:hover{background:var(--short-dim);}
+
+  /* ===== View switch ===== */
+  .view-switch{
+    display:inline-flex; gap:4px; background:var(--panel);
+    border:1px solid var(--border); border-radius:9px; padding:3px;
+    margin-bottom:16px;
+  }
+  .view-switch button{
+    background:transparent; border:none; color:var(--muted-2);
+    font-family:'Inter',sans-serif; font-size:13px; font-weight:500;
+    padding:7px 14px; border-radius:6px; cursor:pointer;
+  }
+  .view-switch button.active{background:var(--amber-dim); color:var(--amber); font-weight:600;}
+  .view-switch button:hover:not(.active){color:var(--text);}
+
+  /* ===== Calendar ===== */
+  .calendar-wrap{display:none;}
+  .calendar-wrap.active{display:block;}
+  .cal-header{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:14px; flex-wrap:wrap; gap:12px;
+  }
+  .cal-nav{display:flex; gap:6px;}
+  .cal-month-label{
+    font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:600;
+    text-transform:capitalize;
+  }
+  .cal-month-total{font-size:13px; margin-left:12px;}
+  .cal-month-total.pos{color:var(--long);}
+  .cal-month-total.neg{color:var(--short);}
+  .cal-month-total.neutral{color:var(--muted);}
+  .cal-scroll{overflow-x:auto;}
+  .cal-grid{
+    border:1px solid var(--border); border-radius:12px; overflow:hidden;
+    background:var(--panel); min-width:640px;
+  }
+  .cal-row{display:grid; grid-template-columns:repeat(7,1fr) 88px;}
+  .cal-row.head{background:var(--panel-2);}
+  .cal-row.head .cal-cell{
+    font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--muted); padding:9px 6px; text-align:center;
+    min-height:auto;
+  }
+  .cal-cell{
+    border-right:1px solid var(--border); border-bottom:1px solid var(--border);
+    padding:8px; min-height:66px; position:relative;
+  }
+  .cal-row .cal-cell:last-child{border-right:none;}
+  .cal-row:last-child .cal-cell{border-bottom:none;}
+  .cal-daynum{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted-2);}
+  .cal-cell.other-month .cal-daynum{color:#2c3138;}
+  .cal-cell.today{box-shadow:inset 0 0 0 1.5px var(--amber);}
+  .cal-result{margin-top:8px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; font-weight:600;}
+  .cal-result.pos{color:var(--long);}
+  .cal-result.neg{color:var(--short);}
+  .cal-result.neutral{color:var(--muted-2);}
+  .cal-count{font-size:10px; color:var(--muted); margin-top:2px;}
+  .cal-week-total{
+    background:var(--panel-2); display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; font-weight:600;
+  }
+  .cal-week-total.pos{color:var(--long);}
+  .cal-week-total.neg{color:var(--short);}
+  .cal-week-total.neutral{color:var(--muted);}
+
+  footer{margin-top:32px; text-align:center; color:var(--muted); font-size:11.5px; font-family:'IBM Plex Mono',monospace;}
+
+  @media (max-width:720px){
+    .stats{grid-template-columns:repeat(2,1fr);}
+    thead{display:none;}
+    table, tbody, tr, td{display:block; width:100%;}
+    tbody tr{padding:12px 14px; border-bottom:1px solid var(--border);}
+    tbody td{padding:3px 0; border:none;}
+    td.num, td{white-space:normal;}
+    .row-actions{justify-content:flex-start; margin-top:6px;}
+    .form-grid{grid-template-columns:1fr;}
+    .cal-header{flex-direction:column; align-items:flex-start;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .ticker-track{animation:none;}
+  }
+</style>
+</head>
+<body>
+<div class="ticker-wrap">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<div class="app">
+  <header>
+    <div>
+      <h1>TradeDaily</h1>
+    </div>
+    <div class="header-actions">
+      <select id="unitSelect" title="Одиниця результату">
+        <option value="pips">Результат: пункти</option>
+        <option value="%">Результат: %</option>
+        <option value="$">Результат: $</option>
+      </select>
+      <button class="btn" id="mtOpenBtn">⚡ MetaTrader</button>
+      <button class="btn btn-primary" id="addBtn">+ Нова угода</button>
+    </div>
+  </header>
+
+  <div class="stats" id="statsRow"></div>
+
+  <div class="view-switch">
+    <button type="button" id="viewListBtn" class="active">Список</button>
+    <button type="button" id="viewCalBtn">Календар</button>
+  </div>
+
+  <div class="filter-bar" id="filterBar">
+    <input type="text" id="filterPair" placeholder="Пошук по парі...">
+    <select id="filterDirection">
+      <option value="">Напрямок: всі</option>
+      <option value="long">Long</option>
+      <option value="short">Short</option>
+    </select>
+    <select id="filterStatus">
+      <option value="">Статус: всі</option>
+      <option value="win">Win</option>
+      <option value="loss">Loss</option>
+      <option value="be">BE</option>
+      <option value="open">Open</option>
+    </select>
+    <div class="filter-spacer"></div>
+  </div>
+
+  <div class="table-wrap" id="tableWrap"></div>
+
+  <div class="calendar-wrap" id="calendarWrap">
+    <div class="cal-header">
+      <div class="cal-nav">
+        <button type="button" class="btn" id="calPrevBtn">←</button>
+        <button type="button" class="btn" id="calTodayBtn">Сьогодні</button>
+        <button type="button" class="btn" id="calNextBtn">→</button>
+      </div>
+      <div>
+        <span class="cal-month-label" id="calMonthLabel"></span>
+        <span class="cal-month-total mono" id="calMonthTotal"></span>
+      </div>
+    </div>
+    <div class="cal-scroll">
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+
+  <footer>дані зберігаються локально у цьому браузері</footer>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <h2 id="modalTitle">Нова угода</h2>
+    <form id="tradeForm">
+      <input type="hidden" id="tradeId">
+      <div class="form-grid">
+        <div>
+          <label for="fDate">Дата</label>
+          <input type="date" id="fDate" required>
+        </div>
+        <div>
+          <label for="fPair">Інструмент</label>
+          <input type="text" id="fPair" placeholder="EURUSD" required style="text-transform:uppercase;">
+        </div>
+        <div>
+          <label for="fDirection">Напрямок</label>
+          <select id="fDirection">
+            <option value="long">Long</option>
+            <option value="short">Short</option>
+          </select>
+        </div>
+        <div>
+          <label for="fSize">Обʼєм (лот)</label>
+          <input type="text" id="fSize" placeholder="0.10">
+        </div>
+        <div>
+          <label for="fEntry">Вхід</label>
+          <input type="text" id="fEntry" placeholder="1.0850">
+        </div>
+        <div>
+          <label for="fExit">Вихід</label>
+          <input type="text" id="fExit" placeholder="1.0920">
+        </div>
+        <div>
+          <label for="fSl">Стоп-лосс</label>
+          <input type="text" id="fSl" placeholder="1.0820">
+        </div>
+        <div>
+          <label for="fTp">Тейк-профіт</label>
+          <input type="text" id="fTp" placeholder="1.0920">
+        </div>
+        <div>
+          <label for="fResult">Результат (лишити пустим, якщо угода відкрита)</label>
+          <input type="text" id="fResult" placeholder="напр. 32 або -18">
+        </div>
+        <div>
+          <label for="fRr">R:R</label>
+          <input type="text" id="fRr" placeholder="1:2.5">
+        </div>
+        <div class="full">
+          <label for="fSetup">Сетап / стратегія</label>
+          <input type="text" id="fSetup" placeholder="напр. пробій рівня, ICT OTE...">
+        </div>
+        <div class="full">
+          <label for="fNotes">Нотатки</label>
+          <textarea id="fNotes" placeholder="Що спрацювало, що ні, емоційний стан..."></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <div>
+          <button type="button" class="btn btn-danger" id="deleteBtn" style="display:none;">Видалити</button>
+        </div>
+        <div class="modal-actions-right">
+          <button type="button" class="btn btn-ghost" id="cancelBtn">Скасувати</button>
+          <button type="submit" class="btn btn-primary">Зберегти</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="mtModalBackdrop">
+  <div class="modal">
+    <h2>Синхронізація з MetaTrader</h2>
+    <p style="font-size:12.5px; color:var(--muted-2); margin:-8px 0 18px; line-height:1.5;">
+      Через <span class="mono">MetaApi.cloud</span>. Додай свій демо-рахунок на
+      <span class="mono">app.metaapi.cloud/accounts</span>, візьми токен на
+      <span class="mono">app.metaapi.cloud/token</span> і встав Account ID звідти.
+      Дані зберігаються лише в цьому браузері.
+    </p>
+    <div class="form-grid">
+      <div class="full">
+        <label for="mtToken">MetaApi токен</label>
+        <input type="password" id="mtToken" placeholder="eyJhbGciOi...">
+      </div>
+      <div class="full">
+        <label for="mtAccountId">Account ID</label>
+        <input type="text" id="mtAccountId" placeholder="865d3a4d-3803-486d-bdf3-a85679d9fad2">
+      </div>
+      <div>
+        <label for="mtDays">Період (днів назад)</label>
+        <input type="text" id="mtDays" value="90">
+      </div>
+    </div>
+    <p id="mtStatus" style="font-size:12.5px; color:var(--muted-2); margin:16px 0 0; min-height:16px;"></p>
+    <div class="modal-actions">
+      <div></div>
+      <div class="modal-actions-right">
+        <button type="button" class="btn btn-ghost" id="mtCancelBtn">Закрити</button>
+        <button type="button" class="btn btn-primary" id="mtSyncBtn">Синхронізувати</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   SEED_TRADES — угоди, додані через чат із Claude, потрапляють
+   сюди. При кожному завантаженні вони автоматично додаються
+   до збережених даних (за унікальним id), не перезаписуючи
+   те, що вручну змінив або видалив користувач.
+   ============================================================ */
+const SEED_TRADES = [
+  // приклад формату (можна видалити або лишити як зразок):
+  // { id:"seed-1", date:"2026-08-01", pair:"EURUSD", direction:"long",
+  //   size:"0.10", entry:"1.0850", exit:"1.0920", sl:"1.0820", tp:"1.0920",
+  //   result: 32, rr:"1:2.5", setup:"Пробій рівня", notes:"Чіткий вхід за планом." }
+];
+
+const STORAGE_KEY = 'trades';
+const SETTINGS_KEY = 'journal_settings';
+let trades = [];
+let settings = { unit: 'pips' };
+let editingId = null;
+let viewMode = 'list';
+let calMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+async function init(){
+  try{
+    const stored = await window.storage.get(STORAGE_KEY, false);
+    trades = stored ? JSON.parse(stored.value) : [];
+  }catch(e){ trades = []; }
+
+  const existingIds = new Set(trades.map(t=>t.id));
+  let changed = false;
+  SEED_TRADES.forEach(s=>{
+    if(!existingIds.has(s.id)){
+      trades.push(s);
+      changed = true;
+    }
+  });
+  if(changed) await persist();
+
+  try{
+    const s = await window.storage.get(SETTINGS_KEY, false);
+    if(s) settings = JSON.parse(s.value);
+  }catch(e){}
+
+  try{
+    const creds = await window.storage.get('mt_credentials', false);
+    if(creds){
+      const parsed = JSON.parse(creds.value);
+      document.getElementById('mtToken').value = parsed.token || '';
+      document.getElementById('mtAccountId').value = parsed.accountId || '';
+    }
+  }catch(e){}
+
+  document.getElementById('unitSelect').value = settings.unit;
+  render();
+}
+
+async function persist(){
+  try{ await window.storage.set(STORAGE_KEY, JSON.stringify(trades), false); }
+  catch(e){ console.error('storage set failed', e); }
+}
+async function persistSettings(){
+  try{ await window.storage.set(SETTINGS_KEY, JSON.stringify(settings), false); }
+  catch(e){ console.error('storage set failed', e); }
+}
+
+function deriveStatus(t){
+  if(t.result === null || t.result === undefined || t.result === '') return 'open';
+  const r = parseFloat(t.result);
+  if(isNaN(r)) return 'open';
+  if(r > 0) return 'win';
+  if(r < 0) return 'loss';
+  return 'be';
+}
+
+function unitLabel(){
+  return settings.unit === 'pips' ? 'п.' : settings.unit;
+}
+
+function fmtResult(t){
+  if(t.result === null || t.result === undefined || t.result === '') return '—';
+  const r = parseFloat(t.result);
+  if(isNaN(r)) return '—';
+  const sign = r > 0 ? '+' : '';
+  return `${sign}${r}${settings.unit==='$' ? '$' : (settings.unit==='%' ? '%' : ' '+unitLabel())}`;
+}
+
+function computeStats(list){
+  const closed = list.filter(t=>deriveStatus(t)!=='open');
+  const wins = closed.filter(t=>deriveStatus(t)==='win');
+  const losses = closed.filter(t=>deriveStatus(t)==='loss');
+  const winRate = closed.length ? Math.round((wins.length/closed.length)*1000)/10 : null;
+  const net = closed.reduce((sum,t)=>{
+    const r = parseFloat(t.result);
+    return sum + (isNaN(r)?0:r);
+  },0);
+  const openCount = list.filter(t=>deriveStatus(t)==='open').length;
+
+  // streak (по закритим угодам, від найновішої)
+  const sorted = [...closed].sort((a,b)=> new Date(b.date) - new Date(a.date));
+  let streak = 0, streakType = null;
+  for(const t of sorted){
+    const st = deriveStatus(t);
+    if(st==='be') break;
+    if(streakType===null){ streakType = st; streak = 1; }
+    else if(st===streakType){ streak++; }
+    else break;
+  }
+
+  return { total:list.length, closedCount:closed.length, winRate, net, openCount, streak, streakType };
+}
+
+function renderStats(){
+  const s = computeStats(trades);
+  const netClass = s.net > 0 ? 'pos' : (s.net < 0 ? 'neg' : '');
+  const wrEl = s.winRate === null ? '—' : s.winRate + '%';
+  const streakLabel = s.streak === 0 ? '—' : `${s.streak} ${s.streakType==='win' ? 'W' : 'L'} поспіль`;
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat">
+      <p class="stat-label">Угод всього</p>
+      <p class="stat-value">${s.total}</p>
+      <p class="stat-sub">${s.openCount} відкрито</p>
+    </div>
+    <div class="stat">
+      <p class="stat-label">Win rate</p>
+      <p class="stat-value">${wrEl}</p>
+      <p class="stat-sub">${s.closedCount} закритих</p>
+    </div>
+    <div class="stat">
+      <p class="stat-label">Чистий результат</p>
+      <p class="stat-value ${netClass} mono">${s.net > 0 ? '+' : ''}${Math.round(s.net*100)/100}${settings.unit==='$'?'$':(settings.unit==='%'?'%':' '+unitLabel())}</p>
+      <p class="stat-sub">за весь час</p>
+    </div>
+    <div class="stat">
+      <p class="stat-label">Серія</p>
+      <p class="stat-value">${streakLabel}</p>
+      <p class="stat-sub">по останніх закритих</p>
+    </div>
+  `;
+}
+
+function renderTicker(){
+  const closed = trades.filter(t=>deriveStatus(t)!=='open')
+    .sort((a,b)=> new Date(b.date) - new Date(a.date))
+    .slice(0,14);
+  const track = document.getElementById('tickerTrack');
+  const tickerWrap = document.querySelector('.ticker-wrap');
+  if(closed.length === 0){
+    tickerWrap.style.display = 'none';
+    return;
+  }
+  tickerWrap.style.display = 'flex';
+  const items = closed.concat(closed); // duplicate for seamless loop
+  track.innerHTML = items.map(t=>{
+    const st = deriveStatus(t);
+    const cls = st==='win' ? 'up' : (st==='loss' ? 'down' : '');
+    return `<span class="ticker-item ${cls}"><b>${escapeHtml(t.pair||'').toUpperCase()}</b> ${fmtResult(t)}</span>`;
+  }).join('');
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function getFiltered(){
+  const pairQ = document.getElementById('filterPair').value.trim().toLowerCase();
+  const dirQ = document.getElementById('filterDirection').value;
+  const statusQ = document.getElementById('filterStatus').value;
+  return trades
+    .filter(t => !pairQ || (t.pair||'').toLowerCase().includes(pairQ))
+    .filter(t => !dirQ || t.direction === dirQ)
+    .filter(t => !statusQ || deriveStatus(t) === statusQ)
+    .sort((a,b)=> new Date(b.date) - new Date(a.date));
+}
+
+function renderTable(){
+  const list = getFiltered();
+  const wrap = document.getElementById('tableWrap');
+
+  if(trades.length === 0){
+    wrap.innerHTML = `
+      <div class="empty-state">
+        <h3>Журнал порожній</h3>
+        <p>Додай першу угоду вручну або напиши деталі в чаті — Claude внесе їх сюди.</p>
+        <button class="btn btn-primary" onclick="document.getElementById('addBtn').click()">+ Нова угода</button>
+      </div>`;
+    return;
+  }
+  if(list.length === 0){
+    wrap.innerHTML = `<div class="empty-state"><h3>Нічого не знайдено</h3><p>Спробуй змінити фільтри.</p></div>`;
+    return;
+  }
+
+  const rows = list.map(t=>{
+    const st = deriveStatus(t);
+    return `
+      <tr>
+        <td class="num">${t.date||''}</td>
+        <td class="pair-cell">${escapeHtml((t.pair||'').toUpperCase())}</td>
+        <td><span class="dir-pill ${t.direction}">${t.direction==='long'?'LONG':'SHORT'}</span></td>
+        <td class="num">${escapeHtml(t.entry||'—')}</td>
+        <td class="num">${escapeHtml(t.exit||'—')}</td>
+        <td class="num result-val ${st==='win'?'pos':(st==='loss'?'neg':'')}">${fmtResult(t)}</td>
+        <td class="num">${escapeHtml(t.rr||'—')}</td>
+        <td><span class="status-pill ${st}">${st.toUpperCase()}</span></td>
+        <td class="notes-preview" title="${escapeHtml(t.notes||'')}">${escapeHtml(t.setup||t.notes||'')}</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn" onclick="openEdit('${t.id}')" title="Редагувати">✎</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Дата</th><th>Пара</th><th>Напрямок</th><th>Вхід</th><th>Вихід</th>
+          <th>Результат</th><th>R:R</th><th>Статус</th><th>Сетап / нотатки</th><th></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function render(){
+  renderStats();
+  renderTicker();
+  if(viewMode==='list'){
+    renderTable();
+  } else {
+    renderCalendar();
+  }
+}
+
+/* ===== Calendar helpers ===== */
+function isoDate(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function startOfWeekMonday(d){
+  const day = (d.getDay()+6)%7;
+  const r = new Date(d);
+  r.setDate(d.getDate()-day);
+  return r;
+}
+function tradesOnDate(dateStr){
+  return trades.filter(t=> t.date===dateStr && deriveStatus(t)!=='open');
+}
+function dayNet(dateStr){
+  return tradesOnDate(dateStr).reduce((s,t)=> s + (parseFloat(t.result)||0), 0);
+}
+function signClass(n){
+  return n > 0 ? 'pos' : (n < 0 ? 'neg' : 'neutral');
+}
+function fmtSigned(n){
+  const r = Math.round(n*100)/100;
+  const sign = r > 0 ? '+' : '';
+  const suffix = settings.unit==='$' ? '$' : (settings.unit==='%' ? '%' : ' '+unitLabel());
+  return `${sign}${r}${suffix}`;
+}
+
+function buildCalendarWeeks(year, month){
+  const firstOfMonth = new Date(year, month, 1);
+  const lastOfMonth = new Date(year, month+1, 0);
+  const gridStart = startOfWeekMonday(firstOfMonth);
+  const gridEnd = startOfWeekMonday(lastOfMonth);
+  gridEnd.setDate(gridEnd.getDate()+6);
+  const weeks = [];
+  let cur = new Date(gridStart);
+  while(cur <= gridEnd){
+    const week = [];
+    for(let i=0;i<7;i++){ week.push(new Date(cur)); cur.setDate(cur.getDate()+1); }
+    weeks.push(week);
+  }
+  return weeks;
+}
+
+function renderCalendar(){
+  const year = calMonth.getFullYear();
+  const month = calMonth.getMonth();
+  const weeks = buildCalendarWeeks(year, month);
+  const todayStr = isoDate(new Date());
+
+  const monthLabel = calMonth.toLocaleDateString('uk-UA', { month:'long', year:'numeric' });
+  document.getElementById('calMonthLabel').textContent = monthLabel;
+
+  // month total: sum of trades whose date falls in this actual month
+  const monthTrades = trades.filter(t=>{
+    if(deriveStatus(t)==='open' || !t.date) return false;
+    const d = new Date(t.date+'T00:00:00');
+    return d.getFullYear()===year && d.getMonth()===month;
+  });
+  const monthNet = monthTrades.reduce((s,t)=> s + (parseFloat(t.result)||0), 0);
+  const monthTotalEl = document.getElementById('calMonthTotal');
+  monthTotalEl.textContent = monthTrades.length ? `· ${fmtSigned(monthNet)} за місяць` : '· ще немає угод цього місяця';
+  monthTotalEl.className = 'cal-month-total mono ' + (monthTrades.length ? signClass(monthNet) : 'neutral');
+
+  const dayNames = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
+  let html = `<div class="cal-row head">
+    ${dayNames.map(d=>`<div class="cal-cell">${d}</div>`).join('')}
+    <div class="cal-cell">Тиждень</div>
+  </div>`;
+
+  weeks.forEach(week=>{
+    let weekNet = 0;
+    let weekHasTrades = false;
+    const cells = week.map(d=>{
+      const dateStr = isoDate(d);
+      const net = dayNet(dateStr);
+      const count = tradesOnDate(dateStr).length;
+      if(count>0){ weekHasTrades = true; weekNet += net; }
+      const otherMonth = d.getMonth()!==month;
+      const isToday = dateStr===todayStr;
+      return `<div class="cal-cell${otherMonth?' other-month':''}${isToday?' today':''}">
+        <div class="cal-daynum">${d.getDate()}</div>
+        ${count>0 ? `<div class="cal-result ${signClass(net)}">${fmtSigned(net)}</div><div class="cal-count">${count} угод${count===1?'а':(count<5?'и':'')}</div>` : ''}
+      </div>`;
+    }).join('');
+    const weekTotalCell = `<div class="cal-week-total ${weekHasTrades ? signClass(weekNet) : 'neutral'}">${weekHasTrades ? fmtSigned(weekNet) : '—'}</div>`;
+    html += `<div class="cal-row">${cells}${weekTotalCell}</div>`;
+  });
+
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function setViewMode(mode){
+  viewMode = mode;
+  document.getElementById('viewListBtn').classList.toggle('active', mode==='list');
+  document.getElementById('viewCalBtn').classList.toggle('active', mode==='calendar');
+  document.getElementById('filterBar').style.display = mode==='list' ? 'flex' : 'none';
+  document.getElementById('tableWrap').style.display = mode==='list' ? 'block' : 'none';
+  document.getElementById('calendarWrap').classList.toggle('active', mode==='calendar');
+  render();
+}
+
+/* ===== Modal handling ===== */
+const backdrop = document.getElementById('modalBackdrop');
+const form = document.getElementById('tradeForm');
+
+function openAdd(){
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'Нова угода';
+  document.getElementById('deleteBtn').style.display = 'none';
+  form.reset();
+  document.getElementById('fDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('fDirection').value = 'long';
+  backdrop.classList.add('open');
+  document.getElementById('fPair').focus();
+}
+
+function openEdit(id){
+  const t = trades.find(x=>x.id===id);
+  if(!t) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Редагувати угоду';
+  document.getElementById('deleteBtn').style.display = 'inline-block';
+  document.getElementById('fDate').value = t.date||'';
+  document.getElementById('fPair').value = t.pair||'';
+  document.getElementById('fDirection').value = t.direction||'long';
+  document.getElementById('fSize').value = t.size||'';
+  document.getElementById('fEntry').value = t.entry||'';
+  document.getElementById('fExit').value = t.exit||'';
+  document.getElementById('fSl').value = t.sl||'';
+  document.getElementById('fTp').value = t.tp||'';
+  document.getElementById('fResult').value = (t.result===null||t.result===undefined) ? '' : t.result;
+  document.getElementById('fRr').value = t.rr||'';
+  document.getElementById('fSetup').value = t.setup||'';
+  document.getElementById('fNotes').value = t.notes||'';
+  backdrop.classList.add('open');
+}
+
+function closeModal(){
+  backdrop.classList.remove('open');
+  editingId = null;
+}
+
+document.getElementById('addBtn').addEventListener('click', openAdd);
+document.getElementById('cancelBtn').addEventListener('click', closeModal);
+backdrop.addEventListener('click', (e)=>{ if(e.target === backdrop) closeModal(); });
+
+document.getElementById('deleteBtn').addEventListener('click', async ()=>{
+  if(!editingId) return;
+  trades = trades.filter(t=>t.id!==editingId);
+  await persist();
+  closeModal();
+  render();
+});
+
+form.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const resultRaw = document.getElementById('fResult').value.trim();
+  const data = {
+    date: document.getElementById('fDate').value,
+    pair: document.getElementById('fPair').value.trim(),
+    direction: document.getElementById('fDirection').value,
+    size: document.getElementById('fSize').value.trim(),
+    entry: document.getElementById('fEntry').value.trim(),
+    exit: document.getElementById('fExit').value.trim(),
+    sl: document.getElementById('fSl').value.trim(),
+    tp: document.getElementById('fTp').value.trim(),
+    result: resultRaw === '' ? null : parseFloat(resultRaw.replace(',','.')),
+    rr: document.getElementById('fRr').value.trim(),
+    setup: document.getElementById('fSetup').value.trim(),
+    notes: document.getElementById('fNotes').value.trim(),
+  };
+
+  if(editingId){
+    const idx = trades.findIndex(t=>t.id===editingId);
+    if(idx>-1) trades[idx] = { ...trades[idx], ...data };
+  } else {
+    data.id = (crypto.randomUUID ? crypto.randomUUID() : 'id-'+Date.now()+'-'+Math.random());
+    trades.push(data);
+  }
+  await persist();
+  closeModal();
+  render();
+});
+
+document.getElementById('unitSelect').addEventListener('change', async (e)=>{
+  settings.unit = e.target.value;
+  await persistSettings();
+  render();
+});
+
+['filterPair','filterDirection','filterStatus'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', render);
+  document.getElementById(id).addEventListener('change', render);
+});
+
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape' && backdrop.classList.contains('open')) closeModal();
+});
+
+document.getElementById('viewListBtn').addEventListener('click', ()=> setViewMode('list'));
+document.getElementById('viewCalBtn').addEventListener('click', ()=> setViewMode('calendar'));
+document.getElementById('calPrevBtn').addEventListener('click', ()=>{
+  calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth()-1, 1);
+  renderCalendar();
+});
+document.getElementById('calNextBtn').addEventListener('click', ()=>{
+  calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth()+1, 1);
+  renderCalendar();
+});
+document.getElementById('calTodayBtn').addEventListener('click', ()=>{
+  const now = new Date();
+  calMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  renderCalendar();
+});
+
+/* ===== MetaTrader (MetaApi.cloud) sync ===== */
+const mtBackdrop = document.getElementById('mtModalBackdrop');
+document.getElementById('mtOpenBtn').addEventListener('click', ()=> mtBackdrop.classList.add('open'));
+document.getElementById('mtCancelBtn').addEventListener('click', ()=> mtBackdrop.classList.remove('open'));
+mtBackdrop.addEventListener('click', (e)=>{ if(e.target === mtBackdrop) mtBackdrop.classList.remove('open'); });
+
+async function mtFetchRegion(token, accountId){
+  const res = await fetch(`https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai/users/current/accounts/${accountId}`, {
+    headers: { 'auth-token': token, 'Accept': 'application/json' }
+  });
+  if(!res.ok) throw new Error(`не вдалось прочитати акаунт (${res.status})`);
+  const data = await res.json();
+  if(!data.region) throw new Error('в акаунта немає поля region — перевір Account ID');
+  return data.region;
+}
+
+async function mtFetchDeals(token, accountId, region, startIso, endIso){
+  const url = `https://mt-client-api-v1.${region}.agiliumtrade.ai/users/current/accounts/${accountId}/history-deals/time/${startIso}/${endIso}`;
+  const res = await fetch(url, { headers: { 'auth-token': token, 'Accept': 'application/json' } });
+  if(!res.ok) throw new Error(`не вдалось прочитати угоди (${res.status})`);
+  return await res.json();
+}
+
+function mtBuildTrades(deals){
+  const byPosition = {};
+  deals.forEach(d=>{
+    if(!d.positionId) return;
+    (byPosition[d.positionId] = byPosition[d.positionId] || []).push(d);
+  });
+  const out = [];
+  Object.entries(byPosition).forEach(([posId, group])=>{
+    const inDeal = group.find(d=>d.entryType==='DEAL_ENTRY_IN');
+    if(!inDeal) return;
+    const outDeals = group.filter(d=>d.entryType==='DEAL_ENTRY_OUT' || d.entryType==='DEAL_ENTRY_OUT_BY');
+    const direction = inDeal.type === 'DEAL_TYPE_BUY' ? 'long' : 'short';
+    let resultVal = null, exitPrice = '', dateStr;
+    if(outDeals.length){
+      const total = outDeals.reduce((s,d)=> s + (d.profit||0) + (d.commission||0) + (d.swap||0), 0);
+      resultVal = Math.round(total*100)/100;
+      const lastOut = outDeals[outDeals.length-1];
+      exitPrice = String(lastOut.price);
+      dateStr = (lastOut.brokerTime || lastOut.time || '').slice(0,10);
+    } else {
+      dateStr = (inDeal.brokerTime || inDeal.time || '').slice(0,10);
+    }
+    out.push({
+      id: 'mt-'+posId,
+      date: dateStr,
+      pair: inDeal.symbol || '',
+      direction,
+      size: String(inDeal.volume||''),
+      entry: String(inDeal.price||''),
+      exit: exitPrice,
+      sl: '',
+      tp: '',
+      result: resultVal,
+      rr: '',
+      setup: 'MetaTrader sync',
+      notes: ''
+    });
+  });
+  return out;
+}
+
+async function mtSync(){
+  const token = document.getElementById('mtToken').value.trim();
+  const accountId = document.getElementById('mtAccountId').value.trim();
+  const days = parseInt(document.getElementById('mtDays').value) || 90;
+  const statusEl = document.getElementById('mtStatus');
+
+  if(!token || !accountId){
+    statusEl.textContent = 'Введи токен і Account ID.';
+    return;
+  }
+  statusEl.textContent = 'Синхронізація...';
+  try{
+    await window.storage.set('mt_credentials', JSON.stringify({token, accountId}), false);
+    const region = await mtFetchRegion(token, accountId);
+    const end = new Date();
+    const start = new Date(end.getTime() - days*24*60*60*1000);
+    const deals = await mtFetchDeals(token, accountId, region, start.toISOString(), end.toISOString());
+    const newTrades = mtBuildTrades(deals);
+    const existingIds = new Set(trades.map(t=>t.id));
+    let added = 0;
+    newTrades.forEach(t=>{
+      if(!existingIds.has(t.id)){
+        trades.push(t);
+        added++;
+      }
+    });
+    await persist();
+    statusEl.textContent = `Готово: додано ${added} нових угод (знайдено ${newTrades.length} за останні ${days} дн.). Одиниця результату в MetaTrader — $, онови селектор зверху за потреби.`;
+    render();
+  }catch(e){
+    statusEl.textContent = 'Помилка: ' + (e.message || e) + '. Якщо запит блокується браузером (CORS) — потрібен проксі через сервер, напиши мені, зроблю.';
+  }
+}
+document.getElementById('mtSyncBtn').addEventListener('click', mtSync);
+
+init();
+</script>
+</body>
+</html>
