@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TradeDaily — торговий журнал</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#050706">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TradeDaily">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -374,6 +381,7 @@
         <option value="%">Результат: %</option>
         <option value="$">Результат: $</option>
       </select>
+      <button class="btn" id="refreshBtn" title="Підтягнути свіжу версію сторінки">⟳ Оновити</button>
       <button class="btn" id="mtOpenBtn">⚡ MetaTrader</button>
       <button class="btn btn-primary" id="addBtn">+ Нова угода</button>
     </div>
@@ -1105,6 +1113,11 @@ async function mtSync(){
   }
 }
 document.getElementById('mtSyncBtn').addEventListener('click', mtSync);
+
+document.getElementById('refreshBtn').addEventListener('click', ()=>{
+  const url = window.location.pathname + '?v=' + Date.now();
+  window.location.href = url;
+});
 
 init();
 </script>
