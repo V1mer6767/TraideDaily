@@ -391,11 +391,11 @@
   <div class="stats" id="statsRow"></div>
 
   <div class="view-switch">
-    <button type="button" id="viewListBtn" class="active">Список</button>
-    <button type="button" id="viewCalBtn">Календар</button>
+    <button type="button" id="viewListBtn">Список</button>
+    <button type="button" id="viewCalBtn" class="active">Календар</button>
   </div>
 
-  <div class="filter-bar" id="filterBar">
+  <div class="filter-bar" id="filterBar" style="display:none;">
     <input type="text" id="filterPair" placeholder="Пошук по парі...">
     <select id="filterDirection">
       <option value="">Напрямок: всі</option>
@@ -412,9 +412,9 @@
     <div class="filter-spacer"></div>
   </div>
 
-  <div class="table-wrap" id="tableWrap"></div>
+  <div class="table-wrap" id="tableWrap" style="display:none;"></div>
 
-  <div class="calendar-wrap" id="calendarWrap">
+  <div class="calendar-wrap active" id="calendarWrap">
     <div class="cal-header">
       <div class="cal-nav">
         <button type="button" class="btn" id="calPrevBtn">←</button>
@@ -582,7 +582,7 @@ const SETTINGS_KEY = 'journal_settings';
 let trades = [];
 let settings = { unit: '$' };
 let editingId = null;
-let viewMode = 'list';
+let viewMode = 'calendar';
 let calMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
 async function init(){
